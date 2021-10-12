@@ -9,6 +9,7 @@ public class TodoItem {
     private String current_date;
     private String category;
     private String due_date;
+    private int is_completed;
     private int id;
 
 
@@ -19,6 +20,7 @@ public class TodoItem {
         this.current_date= df.format(new Date());
         this.category = category;
         this.due_date = due_date;
+        is_completed = 0;
     }
 	
 	public TodoItem(String category, String title, String desc, String due_date, String current_date){
@@ -27,6 +29,7 @@ public class TodoItem {
         this.current_date= current_date;
         this.category = category;
         this.due_date = due_date;
+        is_completed = 0;
     }
     
     public String getTitle() {
@@ -76,9 +79,22 @@ public class TodoItem {
 		this.id = id;
 	}
     
-    @Override
+    public int getIs_completed() {
+		return is_completed;
+	}
+
+	public void setIs_completed(int is_completed) {
+		this.is_completed = is_completed;
+	}
+
+	@Override
 	public String toString() {
-		return id + " [" + category + "] <" + title + "> " + desc + " - " + due_date + " - " + current_date;
+		if(is_completed==0)
+			return id + " [" + category + "] <" + title + "> " + desc + " - " + due_date + " - " + current_date;
+		else if(is_completed==1)
+			return id + " [" + category + "] <" + title + ">[V] " + desc + " - " + due_date + " - " + current_date;
+		else 
+			return null;
 	}
 
 }

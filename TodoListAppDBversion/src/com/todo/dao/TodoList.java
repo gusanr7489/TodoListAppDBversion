@@ -1,7 +1,5 @@
 package com.todo.dao;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,15 +8,11 @@ import java.sql.Statement;
 import java.util.*;
 
 import com.todo.service.DbConnect;
-import com.todo.service.TodoSortByDate;
-import com.todo.service.TodoSortByName;
 
 public class TodoList {
-	private List<TodoItem> list;
 	Connection conn;
 	
 	public TodoList() {
-		this.list = new ArrayList<TodoItem>();
 		this.conn = DbConnect.getConnection();
 	}
 
@@ -92,9 +86,11 @@ public class TodoList {
 				String description = rs.getString("memo");
 				String due_date = rs.getString("due_date");
 				String current_date = rs.getString("current_date");
+				int is_completed = rs.getInt("is_completed");
 				TodoItem t = new TodoItem(title, description, category, due_date);
 				t.setId(id);
 				t.setCurrent_date(current_date);
+				t.setIs_completed(is_completed);
 				list.add(t);
 			}
 			stmt.close();
@@ -104,15 +100,108 @@ public class TodoList {
 		return new ArrayList<TodoItem>(list);
 	}
 
-	public void sortByName() {
-		Collections.sort(list, new TodoSortByName());
-
-	}
-
-	public void listAll() {
-		for (TodoItem myitem : list) {
-			System.out.println(myitem.toString());
+	public ArrayList<TodoItem> getList(String keyword) {
+		ArrayList<TodoItem> list = new ArrayList<TodoItem>();
+		PreparedStatement pstmt;
+		keyword = "%" + keyword + "%";
+		try {
+			String sql = "SELECT * FROM list WHERE title like ? or memo like ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, keyword);
+			pstmt.setString(2, keyword);
+			ResultSet rs = pstmt.executeQuery();
+			while(rs.next()) {
+				int id = rs.getInt("id");
+				String category = rs.getString("category");
+				String title = rs.getString("title");
+				String description = rs.getString("memo");
+				String due_date = rs.getString("due_date");
+				String current_date = rs.getString("current_date");
+				int is_completed = rs.getInt("is_completed");
+				TodoItem t = new TodoItem(title, description, category, due_date);
+				t.setId(id);
+				t.setCurrent_date(current_date);
+				t.setIs_completed(is_completed);
+				list.add(t);
+			}
+			pstmt.close();
+		} catch(SQLException e) {
+			e.printStackTrace();
 		}
+		return new ArrayList<TodoItem>(list);
+	}
+	
+	public ArrayList<String> getCategories() {
+		ArrayList<String> list = new ArrayList<String>() ;
+		Statement stmt;
+		try {
+			stmt = conn.createStatement();
+			String sql = "SELECT DISTINCT category FROM list";
+			ResultSet rs = stmt.executeQuery(sql);
+			while(rs.next()) {
+				String category = rs.getString("category");
+				list.add(category);
+			}
+			stmt.close();
+		}catch(SQLException e) {
+			e.printStackTrace();
+		}
+		return list;
+	}
+	
+	public ArrayList<TodoItem> getListCategory(String keyword) {
+		ArrayList<TodoItem> list = new ArrayList<TodoItem>() ;
+		PreparedStatement pstmt;
+		try {
+			String sql = "SELECT * FROM list WHERE category = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, keyword);
+			ResultSet rs = pstmt.executeQuery();
+			while(rs.next()) {
+				int id = rs.getInt("id");
+				String category = rs.getString("category");
+				String title = rs.getString("title");
+				String description = rs.getString("memo");
+				String due_date = rs.getString("due_date");
+				String current_date = rs.getString("current_date");
+				TodoItem t = new TodoItem(title, description, category, due_date);
+				t.setId(id);
+				t.setCurrent_date(current_date);
+				list.add(t);
+			}
+			pstmt.close();
+		}catch(SQLException e) {
+			e.printStackTrace();
+		}
+		return list;
+	}
+	
+	public ArrayList<TodoItem> getOrderedList(String orderBy, int ordering) {
+		ArrayList<TodoItem> list = new ArrayList<TodoItem>();
+		Statement stmt;
+		try {
+			stmt = conn.createStatement();
+			String sql = "SELECT * FROM list ORDER BY " + orderBy;
+			if(ordering==0)
+				sql += " desc";
+			ResultSet rs = stmt.executeQuery(sql);
+			while(rs.next()) {
+				int id = rs.getInt("id");
+				String category = rs.getString("category");
+				String title = rs.getString("title");
+				String description = rs.getString("memo");
+				String due_date = rs.getString("due_date");
+				String current_date = rs.getString("current_date");
+				TodoItem t = new TodoItem(title, description, category, due_date);
+				t.setId(id);
+				t.setCurrent_date(current_date);
+				list.add(t);
+			}
+			stmt.close();
+		}catch(SQLException e) {
+			e.printStackTrace();
+		}
+		return list;
 	}
 	
 	public int getCount() {
@@ -131,58 +220,88 @@ public class TodoList {
 		return count;
 	}
 	
-	public void reverseList() {
-		Collections.reverse(list);
-	}
-
-	public void sortByDate() {
-		Collections.sort(list, new TodoSortByDate());
-	}
-
-	public int indexOf(TodoItem t) {
-		return list.indexOf(t);
-	}
+//	public int indexOf(TodoItem t) {
+//		return list.indexOf(t);
+//	}
 	
-	public TodoItem getItem(int index) {
-		return list.get(index);
-	}
+/*	public TodoItem getItem(int index) {
+		PreparedStatement pstmt;
+		try {
+			String sql = "SELECT * FROM list WHERE id = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, Integer.toString(index));
+			ResultSet rs = pstmt.executeQuery();
+			
+			int id = rs.getInt("id");
+			String category = rs.getString("category");
+			String title = rs.getString("title");
+			String description = rs.getString("memo");
+			String due_date = rs.getString("due_date");
+			String current_date = rs.getString("current_date");
+			TodoItem t = new TodoItem(title, description, category, due_date);
+			t.setId(id);
+			t.setCurrent_date(current_date);
+			
+			pstmt.close();
+			return t;
+		}catch(SQLException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}*/
 
 	public Boolean isDuplicate(String title) {
-		for (TodoItem item : list) {
-			if (title.equals(item.getTitle())) return true;
+		PreparedStatement pstmt;
+		try {
+			String sql = "SELECT id FROM list WHERE title = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, title);
+			ResultSet rs = pstmt.executeQuery();
+			while(rs.next()) {
+				pstmt.close();
+				return true;
+			}
+			pstmt.close();
+		}catch(SQLException e) {
+			e.printStackTrace();
 		}
 		return false;
 	}
 	
-	public void importData(String filename) {
+	public Boolean isDuplicate(String title, int target) {
+		PreparedStatement pstmt;
 		try {
-			BufferedReader br = new BufferedReader(new FileReader(filename));
-			String line;
-			String sql = "insert into list (title, memo, category, current_date, due_date)" 
-					+ " values (?,?,?,?,?);" ;
-			int record = 0;
-			while((line=br.readLine()) != null) {
-				StringTokenizer st = new StringTokenizer(line, "##");
-				String category = st.nextToken();
-				String title = st.nextToken();
-				String description = st.nextToken();
-				String due_date = st.nextToken();
-				String current_date = st.nextToken();
-				
-				PreparedStatement pstmt = conn.prepareStatement(sql);
-				pstmt.setString(1, title);
-				pstmt.setString(2, description);
-				pstmt.setString(3, category);
-				pstmt.setString(4, current_date);
-				pstmt.setString(5, due_date);
-				int count = pstmt.executeUpdate();
-				if(count >0) record ++;
+			String sql = "SELECT id FROM list WHERE title = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, title);
+			ResultSet rs = pstmt.executeQuery();
+			while(rs.next()) {
+				int id = rs.getInt("id");
+				if(id==target) 
+					continue;
 				pstmt.close();
+				return true;
 			}
-			System.out.println(record + "records read!!");
-			br.close();
-		}catch(Exception e) {
+			pstmt.close();
+		}catch(SQLException e) {
 			e.printStackTrace();
 		}
+		return false;
+	}
+	
+	public int setCompleted(int id) {
+		PreparedStatement pstmt;
+		int count = 0;
+		try {
+			String sql = "UPDATE list SET is_completed=? WHERE id = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, 1);
+			pstmt.setInt(2, id);
+			count = pstmt.executeUpdate();
+			pstmt.close();
+		}catch(SQLException e) {
+			e.printStackTrace();
+		}
+		return count;
 	}
 }

@@ -1,6 +1,5 @@
 package com.todo.service;
 
-
 import java.util.*;
 import com.todo.dao.TodoItem;
 import com.todo.dao.TodoList;
@@ -11,7 +10,7 @@ public class TodoUtil {
 		
 		String title, desc, category, due_date;
 		Scanner sc = new Scanner(System.in);
-		
+		//카테고리, 제목, 내용, 마감일 입력 받음
 		System.out.print("<항목 추가>\n"
 				+ "카테고리 -> ");
 		
@@ -20,14 +19,15 @@ public class TodoUtil {
 		
 		System.out.print("제목 -> ");
 		title = sc.next().trim();	
-/*		if (list.isDuplicate(title)) {
-			System.out.println("항목 제목이 중복됩니다!");
-			return;
-		} */
-		sc.nextLine();
 		
+			// 제목 중복 확인
+			if (list.isDuplicate(title)) {
+				System.out.println("항목 제목이 중복됩니다!");
+				return;
+			} 
+			
+		sc.nextLine();
 		System.out.print("내용 -> ");
-		//trim = 양 끝 공백 제거 메소드
 		desc = sc.nextLine().trim();
 		
 		System.out.print("마감일 -> ");
@@ -76,10 +76,10 @@ public class TodoUtil {
 		System.out.print("새 제목? -> ");
 		String new_title = sc.next().trim();
 		
-/*		if (l.isDuplicate(new_title) && !target.getTitle().contains(new_title)) {
+		if (l.isDuplicate(new_title, index)) {
 			System.out.println("항목 제목이 중복됩니다!");
 			return;
-		}*/
+		}
 		sc.nextLine();
 		
 		System.out.print("새 내용? -> ");
@@ -92,45 +92,33 @@ public class TodoUtil {
 		t.setId(index);
 		if(l.updateItem(t)>0)
 			System.out.println("항목이 수정되었습니다.");
-		
 	}
 	
 	public static void find(String target, TodoList l) {
 		int count=0;
-		for(TodoItem myitem : l.getList()) {
-			if(myitem.getTitle().contains(target) || myitem.getDesc().contains(target)) {
-				System.out.println( (l.indexOf(myitem) + 1) + ". " + myitem.toString());
-				count++;
-			}
+		for(TodoItem myitem : l.getList(target)) {
+			System.out.println(myitem.toString());
+			count++;
 		}
 		System.out.println("총 " + count + "개의 항목을 찾았습니다.");
 	}
 	
 	public static void findCategory(String target, TodoList l) {
 		int count=0;
-		for(TodoItem myitem : l.getList()) {
-			if(myitem.getCategory().contains(target)) {
-				System.out.println( (l.indexOf(myitem)+1) + ". " + myitem.toString());
-				count++;
-			}
+		for(TodoItem item : l.getListCategory(target)) {
+			System.out.println(item.toString());
+			count++;
 		}
 		System.out.println("총 " + count + "개의 항목을 찾았습니다.");
 	}
 	
 	public static void listCategory(TodoList l) {
-		String st="";
 		int count=0;
-		for(TodoItem myitem: l.getList()) {
-			if(!st.contains(myitem.getCategory())) {
-				if(count==0)
-					st = myitem.getCategory();
-				else 
-					st = st + " / " +myitem.getCategory();
-				count++;
-			}
+		for(String item: l.getCategories()) {
+			System.out.print(item + " ");
+			count++;
 		}
-		System.out.println(st + "\n" 
-				+ "총 " + count + "개의 카테고리가 등록되어 있습니다.");
+		System.out.println("\n" + "총 " + count + "개의 카테고리가 등록되어 있습니다.");
 	}
 
 	public static void listAll(TodoList l) {
@@ -140,37 +128,27 @@ public class TodoUtil {
 		}
 	}
 	
-/*	public static void saveList(TodoList l, String fileName) {
-		//try-catch for file open to write
-		try {
-			Writer fw = new FileWriter(fileName);
-			for(TodoItem item: l.getList()) {
-				fw.write(item.toSaveString());
+	public static void listAll(TodoList l, int order) {
+		int count=0;
+		for (TodoItem item : l.getList()) {
+			if(item.getIs_completed()==order) {
+				System.out.println(item.toString());
+				count++;
 			}
-			fw.close();
-			System.out.println("파일에 성공적으로 저장되었습니다.");
-		}	catch (FileNotFoundException e){
-			e.printStackTrace();
-		}	catch (IOException e) {
-			e.printStackTrace();
 		}
-		
+		System.out.println("총 " + count +"개의 항목이 완료되었습니다.");
 	}
 	
-	public static void loadList(TodoList l, String fileName) {
-		try {
-			BufferedReader br = new BufferedReader(new FileReader(fileName));
-			String item="";
-			while((item=br.readLine())!=null) {
-				StringTokenizer st = new StringTokenizer(item,"##");
-				l.addItem(new TodoItem(st.nextToken(),st.nextToken(),st.nextToken(), st.nextToken(), st.nextToken()));
-			}
-			br.close();
-			System.out.println("파일을 성공적으로 열었습니다.");
-		} catch (FileNotFoundException e) {
-			System.out.println("저장된 파일이 없습니다.");
-		} catch (IOException e) {
-			e.printStackTrace();
-		} 
-	}*/
+	public static void listAll(TodoList l, String orderBy, int ordering) {
+		System.out.println("<전체 목록, 총 " + l.getCount() + "개>");
+		for (TodoItem item : l.getOrderedList(orderBy, ordering)) {
+			System.out.println(item.toString());
+		}
+	}
+	
+	public static void completeItem(TodoList l, int index) {
+		if(l.setCompleted(index)>0) 
+			System.out.println("완료 설정되었습니다.");
+	}
+	
 }
